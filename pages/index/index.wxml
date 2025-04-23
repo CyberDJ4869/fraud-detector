@@ -1,0 +1,22 @@
+<view class="container">
+  <view class="header">
+    <text class="title">短信诈骗检测</text>
+    <text class="subtitle">输入短信内容，检测是否为诈骗信息</text>
+  </view>
+  
+  <textarea placeholder="请输入短信内容" bindinput="onInput" value="{{text}}" />
+  
+  <button bindtap="onDetect" loading="{{loading}}" disabled="{{loading}}">{{loading ? '检测中...' : '开始检测'}}</button>
+  
+  <view class="result-container" wx:if="{{result !== null}}">
+    <view class="result-title">检测结果</view>
+    <view class="result {{result === 1 ? 'fraud' : (result === 0 ? 'normal' : 'error')}}">
+      <text wx:if="{{result === 1}}">⚠️ 诈骗</text>
+      <text wx:elif="{{result === 0}}">✅ 正常</text>
+      <text wx:else>❌ {{result}}</text>
+    </view>
+    <view class="tips" wx:if="{{result === 1}}">
+      <text>提示：该信息可能是诈骗短信，请勿轻信，保护个人信息安全。</text>
+    </view>
+  </view>
+</view> 
