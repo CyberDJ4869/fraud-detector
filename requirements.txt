@@ -2,4 +2,5 @@ flask
 flask-cors
 scikit-learn
 jieba
-joblib 
+joblib
+gunicorn 
