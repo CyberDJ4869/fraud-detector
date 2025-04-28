@@ -31,6 +31,44 @@ def preprocess_text(text):
         return ' '.join(words)
     return ''
 
+# 添加后处理函数，基于关键词增强识别能力
+def post_process(text, prediction):
+    """
+    对模型预测结果进行后处理，增强诈骗检测能力。
+    """
+
+    # 强制判定词（只要出现就判定为诈骗）
+    force_fraud_keywords = [
+        "打款", "转账", "账户", "银行卡", "支付密码",
+        "验证码", "冻结账户", "资金安全", "汇款"
+    ]
+
+    # 组合关键词（两个同时出现才判定诈骗）
+    fraud_patterns = [
+        ["老师", "被撞"], 
+        ["中奖", "领取"],
+        ["贷款", "额度"],
+        ["账户", "打钱"],
+        ["银行卡", "转账"],
+        ["冻结", "验证"],
+        ["紧急", "转账"]
+    ]
+
+    text = text.lower()
+
+    # 1. 检查强制关键词，只要出现直接判定诈骗
+    for keyword in force_fraud_keywords:
+        if keyword in text:
+            return 1
+
+    # 2. 检查关键词组合
+    for pattern in fraud_patterns:
+        if all(pat in text for pat in pattern):
+            return 1
+
+    # 3. 保留模型原有预测
+    return prediction
+
 # 健康检查端点
 @app.route('/', methods=['GET'])
 def health_check():
@@ -71,12 +109,19 @@ def predict():
         prediction = model.predict(text_vec)[0]
         result = int(prediction)
         
+        # 使用后处理增强结果
+        final_result = post_process(text, result)
+        
+        # 如果后处理改变了结果，记录日志
+        if final_result != result:
+            logger.info(f"后处理调整: 原始预测={result}, 最终结果={final_result}")
+        
         # 计算响应时间
         elapsed_time = time.time() - start_time
-        logger.info(f"预测完成，结果: {result}, 耗时: {elapsed_time:.2f}秒")
+        logger.info(f"预测完成，结果: {final_result}, 耗时: {elapsed_time:.2f}秒")
         
         # 返回结果
-        return jsonify({"result": result})
+        return jsonify({"result": final_result})
         
     except Exception as e:
         logger.error(f"预测过程中发生错误: {str(e)}", exc_info=True)
